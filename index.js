@@ -5,7 +5,9 @@ module.exports = function (mediaSource) {
         videoWidth = mediaSoruce.videoWidth,
         videoHeight = mediaSource.vidoeHeight,
         canvas = document.createElement('canvas'),
+        thumbnail = document.createElement('canvas'),
         ctx = canvas.getContext('2d'),
+        ctx2 = thumbnail.getContext('2d'),
         ranger = document.createElement('input'),
         cRect,
         cW,
@@ -90,6 +92,7 @@ module.exports = function (mediaSource) {
 
     // append canvas and ranger elements to container
     container.appendChild(canvas);
+    container.appendChild(thumbnail);
     container.appendChild(ranger);
 
     ranger.type = 'ranger';
@@ -99,6 +102,9 @@ module.exports = function (mediaSource) {
         ratio = e.target.value;
     });
 
+    canvas.width = videoWidth;
+    canvas.height = videoHeight;
+
     canvas.addEventListener('wheel', onWheel, false);
     canvas.addEventListener('mousedown', draggable, false);
     canvas.addEventListener('mousemove', drag, false);
@@ -107,11 +113,8 @@ module.exports = function (mediaSource) {
     canvas.addEventListener('unload', stopTimer, false);
 
     timer = setInterval(function () {
-        var videoHeight = video.videoHeight,
-            videoWidth = video.videoWidth,
-            sWidth = videoWidth / ratio,
-            sHeight = videoHeight / ratio,
-            ctx2 = document.getElementById('canvas2').getContext('2d');
+        var sWidth = videoWidth / ratio,
+            sHeight = videoHeight / ratio;
         getScaledPos();
         ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, videoWidth, videoHeight);
         ctx2.drawImage(video, 0, 0);
@@ -119,7 +122,6 @@ module.exports = function (mediaSource) {
         ctx2.fillRect(0, 0, videoWidth, videoHeight);
         ctx2.fillStyle = 'rgba(100, 100, 100, .8)';
         ctx2.fillRect(sx, sy, sWidth, sHeight);
-
     }, 30);
 
 
