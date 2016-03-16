@@ -2,16 +2,16 @@
 
 module.exports = function (mediaSource) {
     var container = mediaSource.parentNode,
-        videoWidth = mediaSoruce.videoWidth,
+        videoWidth = mediaSource.videoWidth,
         videoHeight = mediaSource.vidoeHeight,
         canvas = document.createElement('canvas'),
         thumbnail = document.createElement('canvas'),
         ctx = canvas.getContext('2d'),
         ctx2 = thumbnail.getContext('2d'),
         ranger = document.createElement('input'),
-        cRect,
-        cW,
-        cH,
+        cRect = mediaSource.getBoundingClientRect(),
+        cW = cRect.width,
+        cH = cRect.height,
         ratio = 1,
         max = 7,
         speed = 0.05,
@@ -19,7 +19,8 @@ module.exports = function (mediaSource) {
         previousEvent,
         sx = 0,
         sy = 0,
-        timer;
+        timer,
+        obj;
 
 
     function onWheel (e) {
@@ -38,11 +39,14 @@ module.exports = function (mediaSource) {
             scroll = -1 * speed;
         }
 
-        nextRatio = Math.min(max, Math.max(0, 1 * ratio + scroll));
+        nextRatio = Math.min(max, Math.max(1, 1 * ratio + scroll));
         adjustment = (nextRatio - ratio) / (ratio * nextRatio);
 
-        sx = 1 * sx + e.layerX / cW * video.videoWidth * adjustment;
-        sy = 1 * sy + e.layerY / cH * video.videoHeight * adjustment;
+        console.log(nextRatio);
+        console.log(sx, sy);
+        sx = 1 * sx + e.layerX / cW * videoWidth * adjustment;
+        sy = 1 * sy + e.layerY / cH * videoHeight * adjustment;
+        console.log(sx, sy);
 
         ranger.value = nextRatio;
         ratio = ranger.value;
@@ -69,9 +73,6 @@ module.exports = function (mediaSource) {
     }
 
     function getScaledPos () {
-        var videoWidth = video.videoWidth,
-            videoHeight = video.videoHeight;
-
         sx = Math.max(0, sx);
         sy = Math.max(0, sy);
         if (videoWidth - videoWidth / ratio < sx) {
@@ -90,20 +91,50 @@ module.exports = function (mediaSource) {
         clearInterval(timer);
     }
 
+    function setDimensions () {
+        console.log('set canvas dimensions');
+        videoWidth = mediaSource.videoWidth;
+        videoHeight = mediaSource.videoHeight;
+        canvas.width = videoWidth;
+        canvas.height = videoHeight;
+        thumbnail.width = videoWidth;
+        thumbnail.height = videoHeight;
+        ranger.min = 1;
+        ranger.max = 7;
+    }
+
+    function setStyles () {
+        canvas.style.width = '100%';
+
+        thumbnail.style.width = '10%';
+        thumbnail.style.position = 'absolute';
+        thumbnail.style.bottom = '20px';
+        thumbnail.style.right = '20px';
+    }
+
+
+
+    if (!videoWidth) {
+        mediaSource.addEventListener('playing', setDimensions);
+    }
+
     // append canvas and ranger elements to container
     container.appendChild(canvas);
     container.appendChild(thumbnail);
     container.appendChild(ranger);
 
-    ranger.type = 'ranger';
+    // hide media source
+    mediaSource.style.display = 'none';
+
+    ranger.type = 'range';
     ranger.step = speed;
     ranger.value = 1;
     ranger.addEventListener('input', function (e) {
         ratio = e.target.value;
     });
 
-    canvas.width = videoWidth;
-    canvas.height = videoHeight;
+    setDimensions();
+    setStyles();
 
     canvas.addEventListener('wheel', onWheel, false);
     canvas.addEventListener('mousedown', draggable, false);
@@ -112,12 +143,14 @@ module.exports = function (mediaSource) {
     canvas.addEventListener('mouseout', removeDrag, false);
     canvas.addEventListener('unload', stopTimer, false);
 
+
+
     timer = setInterval(function () {
         var sWidth = videoWidth / ratio,
             sHeight = videoHeight / ratio;
         getScaledPos();
-        ctx.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, videoWidth, videoHeight);
-        ctx2.drawImage(video, 0, 0);
+        ctx.drawImage(mediaSource, sx, sy, sWidth, sHeight, 0, 0, videoWidth, videoHeight);
+        ctx2.drawImage(mediaSource, 0, 0);
         ctx2.fillStyle = 'rgba(255, 255, 255, .8)';
         ctx2.fillRect(0, 0, videoWidth, videoHeight);
         ctx2.fillStyle = 'rgba(100, 100, 100, .8)';
