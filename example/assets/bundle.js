@@ -98,11 +98,16 @@
 	        nextRatio = Math.min(max, Math.max(1, 1 * ratio + scroll));
 	        adjustment = (nextRatio - ratio) / (ratio * nextRatio);
 
-	        console.log(nextRatio);
-	        console.log(sx, sy);
 	        sx = 1 * sx + e.layerX / cW * videoWidth * adjustment;
 	        sy = 1 * sy + e.layerY / cH * videoHeight * adjustment;
-	        console.log(sx, sy);
+
+	        if (nextRatio == 1) {
+	            thumbnail.style.display = 'none';
+	            ranger.style.display = 'none';
+	        } else {
+	            thumbnail.style.display = 'inline';
+	            ranger.style.display = 'inline';
+	        }
 
 	        ranger.value = nextRatio;
 	        ratio = ranger.value;
@@ -162,13 +167,16 @@
 	    function setStyles () {
 	        canvas.style.width = '100%';
 
-	        thumbnail.style.width = '10%';
+	        thumbnail.style.width = '13%';
 	        thumbnail.style.position = 'absolute';
-	        thumbnail.style.bottom = '20px';
+	        thumbnail.style.top = '20px';
 	        thumbnail.style.right = '20px';
+
+	        ranger.style.position = 'absolute';
+	        ranger.style.top = '100px';
+	        ranger.style.left = '-40px';
+	        ranger.style.transform = 'rotate(270deg)';
 	    }
-
-
 
 	    if (!videoWidth) {
 	        mediaSource.addEventListener('playing', setDimensions);
