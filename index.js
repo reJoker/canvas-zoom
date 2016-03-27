@@ -20,7 +20,7 @@ module.exports = function (mediaSource) {
         sx = 0,
         sy = 0,
         timer,
-        obj;
+        obj = {};
 
 
     function onWheel (e) {
@@ -64,10 +64,11 @@ module.exports = function (mediaSource) {
     }
 
     function drag (e) {
+        var rect = container.getBoundingClientRect();
         e.preventDefault();
         if (isDragging) {
-            sx += (previousEvent.clientX - e.clientX) / ratio;
-            sy += (previousEvent.clientY - e.clientY) / ratio;
+            sx += (previousEvent.layerX - e.layerX) / rect.width * videoWidth / ratio;
+            sy += (previousEvent.layerY - e.layerY) / rect.height * videoHeight / ratio;
             previousEvent = e;
         }
     }
@@ -90,41 +91,78 @@ module.exports = function (mediaSource) {
 
     function componentWillUnmount (e) {
         stopTimer();
+        mediaSource.removeEventListener('playing', resizeComponent);
+        container.removeEventListener('mousedown', stopBubbling);
+        container.removeEventListener('resize', resizeComponent);
+        container.removeChild(canvas);
+        container.removeChild(thumbnail);
+        container.removeChild(ranger);
+        mediaSource.style.display = '';
+        return;
     }
 
     function stopTimer () {
         clearInterval(timer);
     }
 
+    function resizeComponent (evt) {
+        if (evt) {
+            console.log(evt.type);
+        }
+        setDimensions();
+        setStyles();
+    }
+
     function setDimensions () {
         console.log('set canvas dimensions');
+        var prevWidth = videoWidth,
+            prevHeight = videoHeight;
         videoWidth = mediaSource.videoWidth;
         videoHeight = mediaSource.videoHeight;
         canvas.width = videoWidth;
         canvas.height = videoHeight;
         thumbnail.width = videoWidth;
         thumbnail.height = videoHeight;
+        if (prevWidth && prevHeight) {
+            sx = sx / prevWidth * videoWidth;
+            sy = sy / prevHeight * videoHeight;
+        }
         ranger.min = 1;
         ranger.max = 7;
     }
 
     function setStyles () {
+        cRect = container.getBoundingClientRect();
+        cW = cRect.width;
+        cH = cRect.height;
+        //canvas.style.width = cW + 'px';
         canvas.style.width = '100%';
 
         thumbnail.style.width = '13%';
         thumbnail.style.position = 'absolute';
         thumbnail.style.top = '20px';
-        thumbnail.style.right = '20px';
+        thumbnail.style.right = '30px';
 
         ranger.style.position = 'absolute';
-        ranger.style.top = '100px';
+        ranger.style.width = '120px';
+        ranger.style.top = '120px';
         ranger.style.left = '-40px';
         ranger.style.transform = 'rotate(270deg)';
     }
 
-    if (!videoWidth) {
-        mediaSource.addEventListener('playing', setDimensions);
+    function stopBubbling (evt) {
+        if (/input/i.test(evt.target.tagName)) {
+            return true;
+        }
+        evt.stopPropagation();
+        evt.preventDefault();
     }
+
+    mediaSource.addEventListener('playing', resizeComponent);
+
+    // stop bubbling
+    container.addEventListener('mousedown', stopBubbling);
+    container.addEventListener('resize', resizeComponent);
 
     // append canvas and ranger elements to container
     container.appendChild(canvas);
@@ -141,17 +179,13 @@ module.exports = function (mediaSource) {
         ratio = e.target.value;
     });
 
-    setDimensions();
-    setStyles();
+    resizeComponent();
 
     canvas.addEventListener('wheel', onWheel, false);
     canvas.addEventListener('mousedown', draggable, false);
     canvas.addEventListener('mousemove', drag, false);
     canvas.addEventListener('mouseup', removeDrag, false);
     canvas.addEventListener('mouseout', removeDrag, false);
-    canvas.addEventListener('unload', stopTimer, false);
-
-
 
     timer = setInterval(function () {
         var sWidth = videoWidth / ratio,
@@ -165,6 +199,15 @@ module.exports = function (mediaSource) {
         ctx2.fillRect(sx, sy, sWidth, sHeight);
     }, 30);
 
+    obj.terminate = componentWillUnmount;
+    obj.getData = function () {
+        return [sx, sy, ratio]
+    }
+    obj.setData = function (arr) {
+        sx = arr[0];
+        sy = arr[1];
+        ratio = arr[2];
+    }
 
     return obj;
 }
