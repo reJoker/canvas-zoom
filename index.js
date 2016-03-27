@@ -16,6 +16,7 @@ module.exports = function (mediaSource) {
         max = 7,
         speed = 0.05,
         isDragging = false,
+        isThumbnailDragging = false,
         previousEvent,
         sx = 0,
         sy = 0,
@@ -63,6 +64,12 @@ module.exports = function (mediaSource) {
         previousEvent = e;
     }
 
+    function thumbnailDraggable (e) {
+        e.preventDefault();
+        isThumbnailDragging = true;
+        setPosWithThumbnail(e);
+    }
+
     function drag (e) {
         var rect = container.getBoundingClientRect();
         e.preventDefault();
@@ -73,9 +80,27 @@ module.exports = function (mediaSource) {
         }
     }
 
+    function setPosWithThumbnail (e) {
+        var rect = thumbnail.getBoundingClientRect();
+        sx = e.layerX / rect.width * videoWidth - (videoWidth / ratio) / 2;
+        sy = e.layerY / rect.height * videoHeight - (videoHeight / ratio) / 2;
+    }
+
+    function thumbnailDrag (e) {
+        e.preventDefault();
+        if (isThumbnailDragging) {
+            setPosWithThumbnail(e);
+        }
+    }
+
     function removeDrag (e) {
         e.preventDefault();
         isDragging = false;
+    }
+
+    function removeThumbnailDrag (e) {
+        e.preventDefault();
+        isThumbnailDragging = false;
     }
 
     function getScaledPos () {
@@ -197,6 +222,10 @@ module.exports = function (mediaSource) {
     canvas.addEventListener('mouseup', removeDrag, false);
     canvas.addEventListener('mouseout', removeDrag, false);
 
+    thumbnail.addEventListener('mousedown', thumbnailDraggable, false);
+    thumbnail.addEventListener('mousemove', thumbnailDrag, false);
+    thumbnail.addEventListener('mouseup', removeThumbnailDrag, false);
+    thumbnail.addEventListener('mouseout', removeThumbnailDrag, false);
     timer = setInterval(function () {
         var sWidth = videoWidth / ratio,
             sHeight = videoHeight / ratio;
