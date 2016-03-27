@@ -214,6 +214,18 @@
 	        evt.preventDefault();
 	    }
 
+	    function rangerInputHandler (e) {
+	        var currWidth = videoWidth / ratio,
+	            currHeight = videoHeight / ratio,
+	            nextRatio = e.target.value,
+	            nextWidth = videoWidth / nextRatio,
+	            nextHeight = videoHeight / nextRatio;
+
+	        sx = sx - (nextWidth - currWidth) / 2;
+	        sy = sy - (nextHeight - currHeight) / 2;
+	        ratio = nextRatio;
+	    };
+
 	    mediaSource.addEventListener('playing', resizeComponent);
 
 	    // stop bubbling
@@ -231,9 +243,7 @@
 	    ranger.type = 'range';
 	    ranger.step = speed;
 	    ranger.value = 1;
-	    ranger.addEventListener('input', function (e) {
-	        ratio = e.target.value;
-	    });
+	    ranger.addEventListener('input', rangerInputHandler);
 
 	    resizeComponent();
 
